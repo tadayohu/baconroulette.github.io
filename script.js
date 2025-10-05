@@ -13,7 +13,7 @@ let totalAngle = 0;
 let isSpinning = false;
 
 // パステルカラーパレット
-const colorPalette = ["#FF6B6B","#6BCB77","#4D96FF","#FFD93D","#FF6EC7","#6A4C93","#FF9F1C","#2EC4B6"];
+const colorPalette = ["#FF6B6B", "#6BCB77", "#4D96FF", "#FFD93D", "#FF6EC7", "#6A4C93", "#FF9F1C", "#2EC4B6"];
 
 // Canvasリサイズ関数（レスポンシブ対応）
 function resizeCanvas() {
@@ -24,72 +24,87 @@ function resizeCanvas() {
 }
 window.addEventListener('resize', resizeCanvas);
 
-// 矢印描画
-function drawArrow() {
-    const arrowSize = canvas.width * 0.03;
-    const cx = canvas.width / 2;
-    ctx.fillStyle = "#ffcc00";
-    ctx.strokeStyle = "#fff";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(cx, 0);
-    ctx.lineTo(cx - arrowSize / 2, arrowSize);
-    ctx.lineTo(cx + arrowSize / 2, arrowSize);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-}
-
-// ルーレット描画
 function drawRoulette() {
     if (segments.length === 0) return;
-    const arc = (2 * Math.PI) / segments.length;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // 中央グラデーション
-    const gradient = ctx.createRadialGradient(canvas.width/2, canvas.height/2, 0, canvas.width/2, canvas.height/2, canvas.width/2);
-    gradient.addColorStop(0, "#fff");
-    gradient.addColorStop(0.1, "#ddd");
-    gradient.addColorStop(1, "#444");
-    ctx.fillStyle = gradient;
-    ctx.beginPath();
-    ctx.arc(canvas.width/2, canvas.height/2, canvas.width/2, 0, 2*Math.PI);
-    ctx.fill();
+    const size = Math.floor(Math.min(window.innerWidth * 0.9, 400));
+    canvas.width = size;
+    canvas.height = size;
+
+    const cx = Math.floor(canvas.width / 2);
+    const cy = Math.floor(canvas.height / 2);
+    const radius = Math.floor(canvas.width / 2);
+    const arc = (2 * Math.PI) / segments.length;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // セグメント描画
     for (let i = 0; i < segments.length; i++) {
         const angle = startAngle + i * arc;
-        ctx.fillStyle = colors[i % colors.length];
         ctx.beginPath();
-        ctx.moveTo(canvas.width/2, canvas.height/2);
-        ctx.arc(canvas.width/2, canvas.height/2, canvas.width/2, angle, angle + arc);
+        ctx.moveTo(cx, cy);
+        ctx.arc(cx, cy, radius, angle, angle + arc);
+        ctx.closePath();
+        ctx.fillStyle = colors[i % colors.length];
         ctx.fill();
+    }
 
-        // テキスト中央配置
+    // テキスト
+    for (let i = 0; i < segments.length; i++) {
+        const angle = startAngle + i * arc + arc / 2;
+        const textRadius = radius * 0.65;
+        const x = cx + Math.cos(angle) * textRadius;
+        const y = cy + Math.sin(angle) * textRadius;
+
         ctx.save();
-        ctx.fillStyle = "#fff";
-        ctx.font = `${Math.floor(canvas.width/15)}px Arial`;
+        ctx.translate(x, y);
+        ctx.rotate(angle + Math.PI / 2);
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        const textAngle = angle + arc/2;
-        const radius = canvas.width/2 * 0.65;
-        const x = canvas.width/2 + Math.cos(textAngle) * radius;
-        const y = canvas.height/2 + Math.sin(textAngle) * radius;
-        ctx.translate(x, y);
-        ctx.rotate(textAngle + Math.PI/2);
+        ctx.fillStyle = "#fff";
+        ctx.font = `${Math.floor(canvas.width / 15)}px Arial`;
         ctx.fillText(segments[i], 0, 0);
         ctx.restore();
     }
 
-    drawArrow();
+    // 矢印描画
+    drawArrow(cx, cy, radius);
 }
+
+function drawArrow(cx, cy, radius) {
+    const arrowWidth = radius * 0.3;   // 横幅（ややワイド）
+    const arrowLength = radius * 0.45; // 縦方向の長さ（以前より長め）
+    ctx.fillStyle = "#ffcc00";
+    ctx.strokeStyle = "#fff";
+    ctx.lineWidth = 2;
+
+    ctx.shadowColor = "rgba(255, 255, 0, 0.6)";
+    ctx.shadowBlur = 10;
+    ctx.shadowOffsetY = 2;
+
+
+    ctx.beginPath();
+    // 上部中央を基準に少し長めの矢印を描く
+    ctx.moveTo(cx, cy - radius + 40); // ルーレット円の内側から
+    ctx.lineTo(cx - arrowWidth / 2, cy - radius - arrowLength);
+    ctx.lineTo(cx + arrowWidth / 2, cy - radius - arrowLength);
+    ctx.closePath();
+
+    ctx.fill();
+    ctx.stroke();
+}
+
+
+
+
+
 
 // easing関数
 function easeInOut(t, b, c, d) {
-    t /= d/2;
-    if (t < 1) return c/2*t*t + b;
+    t /= d / 2;
+    if (t < 1) return c / 2 * t * t + b;
     t--;
-    return -c/2*(t*(t-2)-1) + b;
+    return -c / 2 * (t * (t - 2) - 1) + b;
 }
 
 // スピンアニメーション
@@ -119,9 +134,9 @@ function spin() {
 
 // スピン終了
 function stopRotateWheel() {
-    const normalized = (startAngle % (2*Math.PI) + 2*Math.PI) % (2*Math.PI);
-    const angleFromArrow = (normalized + Math.PI/2) % (2*Math.PI);
-    let index = Math.floor(segments.length - angleFromArrow / (2*Math.PI) * segments.length) % segments.length;
+    const normalized = (startAngle % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
+    const angleFromArrow = (normalized + Math.PI / 2) % (2 * Math.PI);
+    let index = Math.floor(segments.length - angleFromArrow / (2 * Math.PI) * segments.length) % segments.length;
     if (index < 0) index += segments.length;
 
     drawRoulette();
@@ -157,9 +172,9 @@ shareButton.addEventListener('click', shareTwitter);
 
 // stopRotateWheel で結果表示時にシェアボタンを表示
 function stopRotateWheel() {
-    const normalized = (startAngle % (2*Math.PI) + 2*Math.PI) % (2*Math.PI);
-    const angleFromArrow = (normalized + Math.PI/2) % (2*Math.PI);
-    let index = Math.floor(segments.length - angleFromArrow / (2*Math.PI) * segments.length) % segments.length;
+    const normalized = (startAngle % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
+    const angleFromArrow = (normalized + Math.PI / 2) % (2 * Math.PI);
+    let index = Math.floor(segments.length - angleFromArrow / (2 * Math.PI) * segments.length) % segments.length;
     if (index < 0) index += segments.length;
 
     drawRoulette();
