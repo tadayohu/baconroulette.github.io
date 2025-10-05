@@ -83,17 +83,4 @@ button:hover {
     background-color: #0d95e8;
 }
 
-/* 広告バナー */
-.banner-ad {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    padding: 10px 0;
-    text-align: center;
-    color: #fff;
-    font-size: 1em;
-    pointer-events: none; /* クリック無効にして操作の邪魔を防ぐ */
-    z-index: 100;
-}
 
